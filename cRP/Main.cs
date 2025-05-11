@@ -38,6 +38,8 @@ namespace cRP
         private string handlePath;
         private System.Windows.Forms.Timer backupTimer;
         private int maxBackups;
+        private string tempFilePath = "crp_temp.json";
+
         public Main()
         {
             InitializeComponent();
@@ -55,13 +57,11 @@ namespace cRP
 
             if (!File.Exists("config.json"))
             {
-                // Create a default config.json file
                 var config = new
                 {
                     RAMPath = "",
                     NumOfBackup = 5
                 };
-
                 File.WriteAllText("config.json", JsonConvert.SerializeObject(config, Formatting.Indented));
             }
 
@@ -69,7 +69,7 @@ namespace cRP
             {
                 string configJson = File.ReadAllText("config.json");
                 dynamic config = JsonConvert.DeserializeObject(configJson);
-                maxBackups = config.NumOfBackup ?? 5; // Mặc định là 5 nếu không có
+                maxBackups = config.NumOfBackup ?? 5;
             }
             catch (Exception ex)
             {
@@ -77,17 +77,18 @@ namespace cRP
                 maxBackups = 5;
             }
 
-            if (!File.Exists("data.json"))
+            if (!File.Exists("crp_data.json"))
             {
-                // Create a default data.json file
                 var data = new
                 {
-                    Accounts = new List<object> {},
-                    Places = new List<object> {},
+                    Accounts = new List<object> { },
+                    Places = new List<object> { },
                 };
-
-                File.WriteAllText("data.json", JsonConvert.SerializeObject(data, Formatting.Indented));
+                File.WriteAllText("crp_data.json", JsonConvert.SerializeObject(data, Formatting.Indented));
             }
+
+            // Create new crp_temp.json with empty array
+            File.WriteAllText(tempFilePath, JsonConvert.SerializeObject(new List<object>(), Formatting.Indented));
 
             cb_game.Items.Add("All");
             cb_game.SelectedIndex = 0;
@@ -99,20 +100,36 @@ namespace cRP
             StartMonitoring();
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            // Delete crp_temp.json when closing the application
+            if (File.Exists(tempFilePath))
+            {
+                try
+                {
+                    File.Delete(tempFilePath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Lỗi khi xóa file crp_temp.json: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
         private void Main_Load(object sender, EventArgs e)
         {
-            
         }
 
         private void BackupTimer_Tick(object sender, EventArgs e)
         {
             try
             {
-                string dataJsonPath = "data.json";
+                string dataJsonPath = "crp_data.json";
                 string backupDir = "backup";
                 if (!File.Exists(dataJsonPath))
                 {
-                    Console.WriteLine("data.json không tồn tại, bỏ qua backup.");
+                    Console.WriteLine("crp_data.json không tồn tại, bỏ qua backup.");
                     return;
                 }
 
@@ -128,7 +145,6 @@ namespace cRP
 
                 while (backupFiles.Length > maxBackups)
                 {
-                    // Delete oldest backup
                     File.Delete(backupFiles[0]);
                     backupFiles = Directory.GetFiles(backupDir, "data_*.json")
                         .OrderBy(f => File.GetCreationTime(f))
@@ -137,7 +153,7 @@ namespace cRP
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi backup data.json: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Lỗi khi backup crp_data.json: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -186,6 +202,8 @@ namespace cRP
                             }
                         }
                     });
+                    // Remove from crp_temp.json
+                    UpdateTempFile(pid, null, null, true);
                 }
                 foreach (Process process in processes)
                 {
@@ -198,7 +216,6 @@ namespace cRP
                         GetWindowText(hWnd, title, title.Capacity);
                         string logPath = GetLogFilePath(process.Id);
 
-                        //check title name for real main window
                         if (title.ToString() != "Roblox" && !string.IsNullOrEmpty(title.ToString()))
                         {
                             this.Invoke((MethodInvoker)delegate
@@ -232,6 +249,9 @@ namespace cRP
                                         Process = process,
                                         LogPath = logPath
                                     });
+
+                                    // Update crp_temp.json
+                                    UpdateTempFile(process.Id, place, username);
                                 }
                             });
                             continue;
@@ -241,9 +261,7 @@ namespace cRP
                             (place, username) = GetDataFromLog(logPath);
                             if (username != "-")
                             {
-                                // Get main window handle again for avoid old main window
                                 hWnd = process.MainWindowHandle;
-
                                 SetWindowText(hWnd, $"{username} - {place}");
                             }
                             this.Invoke((MethodInvoker)delegate
@@ -268,6 +286,9 @@ namespace cRP
                                         Process = process,
                                         LogPath = logPath
                                     });
+
+                                    // Update crp_temp.json
+                                    UpdateTempFile(process.Id, place, username);
                                 }
                             });
                         }
@@ -281,6 +302,44 @@ namespace cRP
             catch (Exception ex)
             {
                 MessageBox.Show($"Đã xảy ra lỗi process: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void UpdateTempFile(int pid, string game, string username, bool remove = false)
+        {
+            try
+            {
+                List<dynamic> tempData;
+                if (File.Exists(tempFilePath))
+                {
+                    string tempJson = File.ReadAllText(tempFilePath);
+                    tempData = JsonConvert.DeserializeObject<List<dynamic>>(tempJson) ?? new List<dynamic>();
+                }
+                else
+                {
+                    tempData = new List<dynamic>();
+                }
+
+                // Remove existing entry with the same PID
+                tempData.RemoveAll(x => x.PID == pid);
+
+                // Add new entry if not removing
+                if (!remove)
+                {
+                    tempData.Add(new
+                    {
+                        PID = pid,
+                        Game = game,
+                        Username = username
+                    });
+                }
+
+                // Write back to crp_temp.json
+                File.WriteAllText(tempFilePath, JsonConvert.SerializeObject(tempData, Formatting.Indented));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi cập nhật crp_temp.json: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -325,25 +384,22 @@ namespace cRP
             return null;
         }
 
-        private (string,string) GetDataFromLog(string logPath)
+        private (string, string) GetDataFromLog(string logPath)
         {
-            for (int attempt = 0; attempt < 3; attempt++) // Maximum 3 attempts
+            for (int attempt = 0; attempt < 3; attempt++)
             {
                 try
                 {
+                    string jsonData = File.Exists("crp_data.json")
+                        ? File.ReadAllText("crp_data.json", Encoding.UTF8)
+                        : JsonConvert.SerializeObject(new { Accounts = new List<object>(), Places = new List<object>() });
+                    dynamic json = JsonConvert.DeserializeObject(jsonData);
+
                     using (FileStream fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    using (StreamReader sr = new StreamReader(fs, Encoding.UTF8, true))
+                    using (StreamReader sr = new StreamReader(fs, Encoding.UTF8, true, 8192)) // 8KB buffer
                     {
-                        string content = sr.ReadToEnd();
-                        string[] lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                        // Load data.json once
-                        string jsonData = File.Exists("data.json")
-                            ? File.ReadAllText("data.json", Encoding.UTF8)
-                            : JsonConvert.SerializeObject(new { Accounts = new List<object>(), Places = new List<object>() });
-                        dynamic json = JsonConvert.DeserializeObject(jsonData);
-
-                        foreach (string line in lines)
+                        string line;
+                        while ((line = sr.ReadLine()) != null)
                         {
                             if (line.Contains("universeid:") && line.Contains("userid:"))
                             {
@@ -352,7 +408,6 @@ namespace cRP
                                 string universeid = "";
                                 string userid = "";
 
-                                // Extract universeid
                                 string pattern = @"universeid:\s*(\d+)";
                                 Match match = Regex.Match(line, pattern);
                                 if (match.Success)
@@ -377,8 +432,6 @@ namespace cRP
                                             if (gameJson?.data?.Count > 0)
                                             {
                                                 sourcename = gameJson.data[0].sourceName?.ToString() ?? "Unknown Place";
-
-                                                // Save PlaceID and Placename to data.json
                                                 var places = json.Places.ToObject<List<dynamic>>();
                                                 places.Add(new { PlaceID = universeid, Placename = sourcename });
                                                 json.Places = JsonConvert.DeserializeObject(JsonConvert.SerializeObject(places));
@@ -387,7 +440,6 @@ namespace cRP
                                     }
                                 }
 
-                                // Add sourcename for cb_game
                                 if (!string.IsNullOrEmpty(universeid) && !string.IsNullOrEmpty(sourcename))
                                 {
                                     this.Invoke((MethodInvoker)delegate
@@ -399,7 +451,6 @@ namespace cRP
                                     });
                                 }
 
-                                // Extract userid
                                 pattern = @"userid:\s*(\d+)";
                                 match = Regex.Match(line, pattern);
                                 if (match.Success)
@@ -421,8 +472,6 @@ namespace cRP
                                             string jsonResponse = client.DownloadString(apiUrl);
                                             dynamic userJson = JsonConvert.DeserializeObject(jsonResponse);
                                             username = userJson?.name?.ToString() ?? "Unknown User";
-
-                                            // Save UserID and Username to data.json
                                             var accounts = json.Accounts.ToObject<List<dynamic>>();
                                             accounts.Add(new { UserID = userid, Username = username });
                                             json.Accounts = JsonConvert.DeserializeObject(JsonConvert.SerializeObject(accounts));
@@ -430,11 +479,11 @@ namespace cRP
                                     }
                                 }
 
-                                File.WriteAllText("data.json", JsonConvert.SerializeObject(json, Formatting.Indented), Encoding.UTF8);
+                                File.WriteAllText("crp_data.json", JsonConvert.SerializeObject(json, Formatting.Indented), Encoding.UTF8);
 
                                 if (!string.IsNullOrEmpty(sourcename) && !string.IsNullOrEmpty(username))
                                 {
-                                    return (sourcename,username);
+                                    return (sourcename, username);
                                 }
                             }
                         }
@@ -444,13 +493,12 @@ namespace cRP
                 {
                     MessageBox.Show($"Đã xảy ra lỗi khi đọc file log: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-
                 if (attempt < 2)
                 {
                     Thread.Sleep(5000);
                 }
             }
-            return ("-","-");
+            return ("-", "-");
         }
 
         private void bt_show_Click(object sender, EventArgs e)
@@ -496,7 +544,6 @@ namespace cRP
                 {
                     try
                     {
-                        // Check if the file is in use by any tracked process
                         bool isInUse = trackedProcesses.Values.Any(p => p.LogPath != null && p.LogPath.Equals(logFile, StringComparison.OrdinalIgnoreCase));
                         if (!isInUse)
                         {
@@ -506,11 +553,9 @@ namespace cRP
                     }
                     catch (IOException)
                     {
-                        // Skip
                     }
                     catch (UnauthorizedAccessException)
                     {
-                        // Skip
                     }
                 }
 
@@ -540,6 +585,9 @@ namespace cRP
                                 process.Kill();
                                 trackedProcesses.Remove(pid);
                                 dataGridView.Rows.Remove(row);
+
+                                // Remove from crp_temp.json
+                                UpdateTempFile(pid, null, null, true);
                             }
                         }
                     }
@@ -550,6 +598,7 @@ namespace cRP
                 MessageBox.Show($"Đã xảy ra lỗi khi tắt process: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void cb_game_SelectedIndexChanged(object sender, EventArgs e)
         {
             string selectedGame = cb_game.SelectedItem?.ToString();
@@ -573,6 +622,7 @@ namespace cRP
             Process.Start(new ProcessStartInfo("https://github.com/QBGamer") { UseShellExecute = true });
         }
     }
+
     public class RobloxProcessInfo
     {
         public int PID { get; set; }

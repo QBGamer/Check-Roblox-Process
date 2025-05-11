@@ -42,16 +42,16 @@
             this.bt_close = new System.Windows.Forms.Button();
             this.bt_clean = new System.Windows.Forms.Button();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.panel3 = new System.Windows.Forms.Panel();
+            this.link_qbgamer = new System.Windows.Forms.LinkLabel();
             this.panel2 = new System.Windows.Forms.Panel();
             this.lb_tab = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.link_qbgamer = new System.Windows.Forms.LinkLabel();
-            this.panel3 = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).BeginInit();
             this.tableLayoutPanel1.SuspendLayout();
+            this.panel3.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel1.SuspendLayout();
-            this.panel3.SuspendLayout();
             this.SuspendLayout();
             // 
             // dataGridView
@@ -221,6 +221,34 @@
             this.tableLayoutPanel1.Size = new System.Drawing.Size(635, 277);
             this.tableLayoutPanel1.TabIndex = 5;
             // 
+            // panel3
+            // 
+            this.panel3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel3.Controls.Add(this.link_qbgamer);
+            this.panel3.Location = new System.Drawing.Point(551, 250);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(81, 24);
+            this.panel3.TabIndex = 6;
+            // 
+            // link_qbgamer
+            // 
+            this.link_qbgamer.ActiveLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
+            this.link_qbgamer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.link_qbgamer.AutoSize = true;
+            this.link_qbgamer.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
+            this.link_qbgamer.Location = new System.Drawing.Point(12, 6);
+            this.link_qbgamer.Name = "link_qbgamer";
+            this.link_qbgamer.Size = new System.Drawing.Size(67, 13);
+            this.link_qbgamer.TabIndex = 8;
+            this.link_qbgamer.TabStop = true;
+            this.link_qbgamer.Text = "by QBGamer";
+            this.link_qbgamer.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
+            this.link_qbgamer.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.link_qbgamer_LinkClicked);
+            // 
             // panel2
             // 
             this.panel2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -259,34 +287,6 @@
             this.panel1.Size = new System.Drawing.Size(81, 241);
             this.panel1.TabIndex = 6;
             // 
-            // link_qbgamer
-            // 
-            this.link_qbgamer.ActiveLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
-            this.link_qbgamer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.link_qbgamer.AutoSize = true;
-            this.link_qbgamer.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(128)))), ((int)(((byte)(255)))));
-            this.link_qbgamer.Location = new System.Drawing.Point(12, 6);
-            this.link_qbgamer.Name = "link_qbgamer";
-            this.link_qbgamer.Size = new System.Drawing.Size(67, 13);
-            this.link_qbgamer.TabIndex = 8;
-            this.link_qbgamer.TabStop = true;
-            this.link_qbgamer.Text = "by QBGamer";
-            this.link_qbgamer.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
-            this.link_qbgamer.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.link_qbgamer_LinkClicked);
-            // 
-            // panel3
-            // 
-            this.panel3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel3.Controls.Add(this.link_qbgamer);
-            this.panel3.Location = new System.Drawing.Point(551, 250);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(81, 24);
-            this.panel3.TabIndex = 6;
-            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -298,15 +298,15 @@
             this.MinimumSize = new System.Drawing.Size(670, 340);
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Check Roblox Process";
+            this.Text = "cRP v1.0.1";
             this.Load += new System.EventHandler(this.Main_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).EndInit();
             this.tableLayoutPanel1.ResumeLayout(false);
+            this.panel3.ResumeLayout(false);
+            this.panel3.PerformLayout();
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
             this.panel1.ResumeLayout(false);
-            this.panel3.ResumeLayout(false);
-            this.panel3.PerformLayout();
             this.ResumeLayout(false);
 
         }
